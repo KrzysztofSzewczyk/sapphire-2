@@ -38,17 +38,16 @@ class Parser:
         try:
            co = compile(expr, self.lnerr, 'eval')
         except SyntaxError as e:
-           errline = self.line.replace(e.text, '')
-           print(errline + e.text)
-           print((len(errline) + e.offset - 1) * ' ' + '^')
+           print(e.text)
+           print((e.offset - 1) * ' ' + '^')
            exit('error: %s (%s)' % (e.msg.replace(
                 'EOF', 'EOL'), self.lnerr))
         except Exception as e:
            exit('error: %s (%s)' % (e, self.lnerr))
 
         def op(instr):
-            self.asm('pop', 'r1')
             self.asm('pop', 'r2')
+            self.asm('pop', 'r1')
             self.asm(instr, 'r1', 'r2')
             self.asm('psh', 'r1')
 
@@ -56,7 +55,14 @@ class Parser:
             
             # load const
             if c1 == 100:
-                self.asm('psh', co.co_consts[c2])
+                c = co.co_consts[c2]
+                if c == None:
+                    self.asm('psh', 0)
+                elif isinstance(c, int):
+                    self.asm('psh', c)
+                else:
+                    exit('error: invalid const %s at `%s` (line %d)' % (
+                        str(bytes(c.encode()))[1:], expr, self.ln_no))
 
             # load variable
             elif c1 == 101:
@@ -182,6 +188,12 @@ class Parser:
                         self.asm('; end')
                         self.asm('lbl', tc[2])
 
+                    if tc[0] == 'while':
+                        self.asm.code += '\n'
+                        self.asm('; end')
+                        self.asm('jmp', tc[3])
+                        self.asm('lbl', tc[2])
+
                     self.to_close.pop()
 
             if line.strip() == '':
@@ -204,10 +216,27 @@ class Parser:
                 cond = ' '.join(tokens[1:])
                 self.expr(cond)
                 sklb = self.asm.label(i = True)
+                
                 self.asm('pop', 'r1')
                 self.asm('jz_', 'r1', sklb)
                 
                 self.to_close += [('if', self.get_indent(line), sklb)]
+            
+            # while statement
+            elif tokens[0] == 'while':
+                
+                sklb = self.asm.label(i = True)
+                back = self.asm.label(i = True)
+                
+                cond = ' '.join(tokens[1:])
+                self.asm('lbl', back)
+                self.expr(cond)
+                
+                self.asm('pop', 'r1')
+                self.asm('jz_', 'r1', sklb)
+                
+                self.to_close += [('while', self.get_indent(line),
+                    sklb, back)]
 
             # var assign
             elif len(tokens) > 1 and tokens[1] == '=':
