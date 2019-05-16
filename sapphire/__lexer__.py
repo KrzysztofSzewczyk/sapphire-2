@@ -1,8 +1,9 @@
 from sly import Lexer
 
 class Lexer(Lexer):
-    tokens = { STRING, ID, NUMBER,
-               IF, DEF, ELSE, WHILE }
+    tokens = { ID, STRING, NUMBER, ASM,
+               IF, DEF, ELSE, WHILE,
+               EQ, NE, LT, LE, GT, GE }
     ignore = ' \t'
     literals = '+-*/%=,()[]'
 
@@ -11,9 +12,17 @@ class Lexer(Lexer):
 
     # keywords
     ID['if'] = IF
+    ID['asm'] = ASM
     ID['def'] = DEF
     ID['else'] = ELSE
     ID['while'] = WHILE
+
+    EQ = r'=='
+    NE = r'!='
+    LT = r'<'
+    LE = r'<='
+    GT = r'>'
+    GE = r'>='
 
     @_(r'0x[0-9a-fA-F]+', r'\d+')
     def NUMBER(self, t):
@@ -27,5 +36,5 @@ def lex(line):
     tokens = []
     lexer = Lexer()
     for token in lexer.tokenize(line):
-        tokens += [token.value]
+        tokens += [str(token.value)]
     return tokens
