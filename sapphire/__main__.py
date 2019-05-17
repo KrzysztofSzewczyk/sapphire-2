@@ -1,5 +1,9 @@
-from __parser__ import *
 from sys import *
+
+if version_info[:2] != (3, 6):
+    exit('error: required python: 3.6.x')
+
+from __parser__ import *
 from subprocess import run, PIPE
 from os.path import *
 
@@ -14,6 +18,7 @@ def readfile(filename):
     return data
 
 if __name__ == '__main__':
+
     if len(argv) < 3:
         exit('usage: python sapphire <file.sph> <file.b>')
 
