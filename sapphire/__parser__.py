@@ -34,7 +34,7 @@ class Parser:
         # init memory
         self.meminit()
 
-    def expr(self, expr, var_address=None):
+    def compile(self, expr):
         try:
            co = compile(expr, self.lnerr, 'eval')
         except SyntaxError as e:
@@ -45,16 +45,75 @@ class Parser:
         except Exception as e:
            exit('error: %s (%s)' % (e, self.lnerr))
 
+        return co
+
+    def get_cocode(self, co):
+        return list(zip(*[iter(list(co.co_code))] * 2))
+
+    def function(self, expr):
+        co = self.compile(expr)
+        cocode = self.get_cocode(co)
+        
+        try:
+            if (cocode[-1] != (83, 0) or
+                cocode[0][0] != 101 or
+                cocode[-2][0] != 131):
+                exit('error: invalid function (line %d)' % self.ln_no)
+        except:
+            exit('error: invalid function (line %d)' % self.ln_no)
+
+        cocode = cocode[1:-2]
+        argi = 0
+
+        for c1, c2 in cocode:
+
+            if c1 != 101:
+                exit('error: invalid function (line %d)' % self.ln_no)
+
+            name = co.co_names[c2]
+            addr = self.addr(name)
+            argi += 1
+            
+            self.asm.code += '\n'
+            self.asm('; <= ' + name + ' =>')
+            self.asm('mov', 'r4', addr)
+            self.asm('sto', 'r4', 'r' + str(argi))
+
+    def expr(self, expr, var_address=None):
+        co = self.compile(expr)
+        cocode = self.get_cocode(co)
+
         def op(instr):
             self.asm('pop', 'r2')
             self.asm('pop', 'r1')
             self.asm(instr, 'r1', 'r2')
             self.asm('psh', 'r1')
 
-        for c1, c2 in zip(*[iter(list(co.co_code))] * 2):
+        for i, c in enumerate(cocode):
+            c1, c2 = c
             
+            # call function
+            if c1 == 131:
+                
+                # args
+                for i in range(c2):
+                    self.asm('pop', 'r' + str(c2 - i))
+                
+                # call
+                back = self.asm.label(i = True)
+                # function address
+                self.asm('pop', 'r4')
+                # push back address
+                self.asm('psh', back)
+                # jump to function
+                self.asm('jmp', 'r4')
+                # back label
+                self.asm('lbl', back)
+                # push returned value
+                self.asm('psh', 'r1')
+
             # load const
-            if c1 == 100:
+            elif c1 == 100:
                 c = co.co_consts[c2]
                 if c == None:
                     self.asm('psh', 0)
@@ -176,23 +235,24 @@ class Parser:
                 tc = self.to_close[-1]
                 if tc[1] == self.get_indent(line):
                     # print(tc, lnerr)
+                    
+                    self.asm.code += '\n'
+                    self.asm('; end')
 
-                    if tc[0] == 'else':
-                        
-                        self.asm.code += '\n'
-                        self.asm('; end')
-                        self.asm('lbl', tc[2])
-
-                    if tc[0] == 'if':
-                        self.asm.code += '\n'
-                        self.asm('; end')
-                        self.asm('lbl', tc[2])
+                    if tc[0] == 'else': self.asm('lbl', tc[2])
+                    if tc[0] == 'if': self.asm('lbl', tc[2])
 
                     if tc[0] == 'while':
-                        self.asm.code += '\n'
-                        self.asm('; end')
                         self.asm('jmp', tc[3])
                         self.asm('lbl', tc[2])
+
+                    # def, indent, skip, addr, flbl
+                    if tc[0] == 'def':
+                        self.func = None
+                        self.asm('ret')
+                        self.asm('lbl', tc[2])
+                        self.asm('mov', 'r1', tc[3])
+                        self.asm('sto', 'r1', tc[4])
 
                     self.to_close.pop()
 
@@ -207,8 +267,24 @@ class Parser:
                 
                 if tokens[1][0] != '"' or tokens[1][-1] != '"':
                     exit('error: expected string after `as` (%s)' % lnerr)
-                
+
                 self.asm(eval(tokens[1]))
+            
+            # function
+            elif tokens[0] == 'def':
+
+                skip = self.asm.label(i = True)
+                flbl = self.asm.label(i = True)
+                addr = self.addr(tokens[1])
+               
+                self.asm('jmp', skip)
+                self.asm('lbl', flbl)
+
+                self.func = tokens[1]
+                self.function(' '.join(tokens[1:]))
+
+                self.to_close += [('def', self.get_indent(line),
+                    skip, addr, flbl)]
             
             # if statement
             elif tokens[0] == 'if':
