@@ -73,7 +73,7 @@ class Parser:
             name = co.co_names[c2]
             addr = self.addr(name)
             argi += 1
-            
+
             self.asm.code += '\n'
             self.asm('; <= ' + name + ' =>')
             self.asm('mov', 'r4', addr)
@@ -88,12 +88,36 @@ class Parser:
             self.asm('pop', 'r1')
             self.asm(instr, 'r1', 'r2')
             self.asm('psh', 'r1')
-
+        
+        def build_array(c2):
+            self.memi += c2
+            self.asm('mov', 'r4', c2)
+            self.asm('mov', 'r1', self.memi)
+            lbl = self.asm.label()
+            
+            self.asm('dec', 'r1')
+            self.asm('pop', 'r2')
+            self.asm('sto', 'r1', 'r2')
+            self.asm('dec', 'r4')
+            
+            self.asm('jnz', 'r4', lbl)
+            self.asm('psh', self.memi - c2)
+        
         for i, c in enumerate(cocode):
             c1, c2 = c
             
+            # subscr
+            if c1 == 25:
+                name = co.co_names[cocode[i - 2][1]]
+                addr = self.addr(name)
+                self.asm('pop', 'r1')
+                self.asm('pop', 'r2')
+                self.asm('add', 'r2', 'r1')
+                self.asm('rcl', 'r1', 'r2')
+                self.asm('psh', 'r1')
+
             # call function
-            if c1 == 131:
+            elif c1 == 131:
                 
                 # args
                 for i in range(c2):
@@ -112,16 +136,29 @@ class Parser:
                 # push returned value
                 self.asm('psh', 'r1')
 
+            # build array
+            elif c1 == 103:
+                build_array(c2)
+
             # load const
             elif c1 == 100:
                 c = co.co_consts[c2]
+                
+                if isinstance(c, float):
+                    c = int(c)
+            
                 if c == None:
                     self.asm('psh', 0)
                 elif isinstance(c, int):
                     self.asm('psh', c)
+                elif isinstance(c, str):
+                    for x in c:
+                        self.asm('psh', ord(x))
+                    build_array(len(c))
                 else:
                     exit('error: invalid const %s at `%s` (line %d)' % (
-                        str(bytes(c.encode()))[1:], expr, self.ln_no))
+                        str(bytes(str(c).encode()))
+                        [1:], expr, self.ln_no))
 
             # load variable
             elif c1 == 101:
@@ -204,6 +241,27 @@ class Parser:
         # return rline with removed stripped line
         return rline.replace(line.strip(), '')
 
+    def close(self, tc):
+        # print(tc)
+                    
+        self.asm.code += '\n'
+        self.asm('; end')
+
+        if tc[0] == 'else': self.asm('lbl', tc[2])
+        if tc[0] == 'if': self.asm('lbl', tc[2])
+
+        if tc[0] == 'while':
+            self.asm('jmp', tc[3])
+            self.asm('lbl', tc[2])
+
+        # def, indent, skip, addr, flbl
+        if tc[0] == 'def':
+            self.func = None
+            self.asm('ret')
+            self.asm('lbl', tc[2])
+            self.asm('mov', 'r1', tc[3])
+            self.asm('sto', 'r1', tc[4])
+       
     def parse(self, code):
         
         # global
@@ -242,30 +300,11 @@ class Parser:
                 self.to_close += [('else', self.get_indent(line), sklb)]
                 continue
 
-            if len(self.to_close) > 0:
-                tc = self.to_close[-1]
+            for i, tc in enumerate(reversed(self.to_close)):
+                
                 if tc[1] == self.get_indent(line):
-                    # print(tc, lnerr)
-                    
-                    self.asm.code += '\n'
-                    self.asm('; end')
-
-                    if tc[0] == 'else': self.asm('lbl', tc[2])
-                    if tc[0] == 'if': self.asm('lbl', tc[2])
-
-                    if tc[0] == 'while':
-                        self.asm('jmp', tc[3])
-                        self.asm('lbl', tc[2])
-
-                    # def, indent, skip, addr, flbl
-                    if tc[0] == 'def':
-                        self.func = None
-                        self.asm('ret')
-                        self.asm('lbl', tc[2])
-                        self.asm('mov', 'r1', tc[3])
-                        self.asm('sto', 'r1', tc[4])
-
-                    self.to_close.pop()
+                    for j in range(i + 1):
+                        self.close(self.to_close.pop())
 
             if line.strip() == '' or len(tokens) == 0:
                 continue
