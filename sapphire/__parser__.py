@@ -92,8 +92,18 @@ class Parser:
         for i, c in enumerate(cocode):
             c1, c2 = c
             
+            # subscr
+            if c1 == 25:
+                name = co.co_names[cocode[i - 2][1]]
+                addr = self.addr(name)
+                self.asm('pop', 'r1')
+                self.asm('pop', 'r2')
+                self.asm('add', 'r2', 'r1')
+                self.asm('rcl', 'r1', 'r2')
+                self.asm('psh', 'r1')
+
             # call function
-            if c1 == 131:
+            elif c1 == 131:
                 
                 # args
                 for i in range(c2):
@@ -111,6 +121,21 @@ class Parser:
                 self.asm('lbl', back)
                 # push returned value
                 self.asm('psh', 'r1')
+
+            # build array
+            elif c1 == 103:
+                self.memi += c2
+                self.asm('mov', 'r4', c2)
+                self.asm('mov', 'r1', self.memi)
+                lbl = self.asm.label()
+                
+                self.asm('dec', 'r1')
+                self.asm('pop', 'r2')
+                self.asm('sto', 'r1', 'r2')
+                self.asm('dec', 'r4')
+                
+                self.asm('jnz', 'r4', lbl)
+                self.asm('psh', self.memi - c2)
 
             # load const
             elif c1 == 100:
