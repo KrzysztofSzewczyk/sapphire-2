@@ -1,7 +1,7 @@
 from sly import Lexer
 
 class Lexer(Lexer):
-    tokens = { ID, STRING, NUMBER, ASM,
+    tokens = { ID, STRING, NUMBER, AS,
                IF, DEF, ELSE, WHILE,
                EQ, NE, LT, LE, GT, GE }
     ignore = ' \t'
@@ -12,7 +12,7 @@ class Lexer(Lexer):
 
     # keywords
     ID['if'] = IF
-    ID['asm'] = ASM
+    ID['as'] = AS
     ID['def'] = DEF
     ID['else'] = ELSE
     ID['while'] = WHILE
@@ -23,6 +23,7 @@ class Lexer(Lexer):
     LE = r'<='
     GT = r'>'
     GE = r'>='
+    ignore_comment = r'\#.*'
 
     @_(r'0x[0-9a-fA-F]+', r'\d+')
     def NUMBER(self, t):
