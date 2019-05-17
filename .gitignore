@@ -1,0 +1,7 @@
+test 
+*.pyc
+test.bat
+*.exe
+*.py~
+*.un~
+*.swp
