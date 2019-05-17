@@ -63,6 +63,7 @@ class Parser:
             exit('error: invalid function (line %d)' % self.ln_no)
 
         cocode = cocode[1:-2]
+        argi = 0
 
         for c1, c2 in cocode:
 
@@ -71,12 +72,12 @@ class Parser:
 
             name = co.co_names[c2]
             addr = self.addr(name)
-
+            argi += 1
+            
             self.asm.code += '\n'
             self.asm('; <= ' + name + ' =>')
-            self.asm('pop', 'r1')
-            self.asm('mov', 'r2', addr)
-            self.asm('sto', 'r2', 'r1')
+            self.asm('mov', 'r4', addr)
+            self.asm('sto', 'r4', 'r' + str(argi))
 
     def expr(self, expr, var_address=None):
         co = self.compile(expr)
@@ -94,21 +95,21 @@ class Parser:
             # call function
             if c1 == 131:
                 
-                c = cocode[i - c2 - 1]
-                if c[0] != 101:
-                    exit('error: invalid function (line %d)' % self.ln_no)
-                
-                # function
-                fnam = co.co_names[c[1]]
-                addr = self.addr(fnam)
-
-                self.asm('rcl', 'r1', addr)
+                # args
+                for i in range(c2):
+                    self.asm('pop', 'r' + str(c2 - i))
                 
                 # call
                 back = self.asm.label(i = True)
+                # function address
+                self.asm('pop', 'r4')
+                # push back address
                 self.asm('psh', back)
-                self.asm('jmp', 'r1')
+                # jump to function
+                self.asm('jmp', 'r4')
+                # back label
                 self.asm('lbl', back)
+                # push returned value
                 self.asm('psh', 'r1')
 
             # load const
@@ -124,17 +125,6 @@ class Parser:
 
             # load variable
             elif c1 == 101:
-                cont = False
-                try:
-                    for j in range(1024):
-                        if cocode[i + 1 + j] == (131, j):
-                            cont = True
-                except:
-                    pass
-
-                if cont:
-                    continue
-
                 self.asm('rcl', 'r1', self.addr(co.co_names[c2]))
                 self.asm('psh', 'r1')
             

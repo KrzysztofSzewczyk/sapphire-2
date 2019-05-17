@@ -1,5 +1,5 @@
 CC=gcc
-CFLAGS=-O3 -match=native -Wall -Wextra
+CFLAGS=-O3 -march=native -Wall -Wextra
 
 bfasm:
 	@$(CC) -o sapphire/bfasm sapphire/bfasm.c $(CFLAGS)
