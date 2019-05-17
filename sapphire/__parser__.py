@@ -203,10 +203,10 @@ class Parser:
             self.asm('; ' + line.strip())
 
             # inline asm
-            if tokens[0] == 'asm':
+            if tokens[0] == 'as':
                 
                 if tokens[1][0] != '"' or tokens[1][-1] != '"':
-                    exit('error: expected string after `asm` (%s)' % lnerr)
+                    exit('error: expected string after `as` (%s)' % lnerr)
                 
                 self.asm(eval(tokens[1]))
             
