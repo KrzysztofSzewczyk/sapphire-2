@@ -3,7 +3,8 @@ from sly import Lexer
 class Lexer(Lexer):
     tokens = { ID, STRING, NUMBER, AS,
                IF, DEF, ELSE, WHILE,
-               EQ, NE, LT, LE, GT, GE }
+               EQ, NE, LE, GE, LT, GT,
+               COMMENT }
     ignore = ' \t'
     literals = '+-*/%=,()[]'
 
@@ -19,11 +20,11 @@ class Lexer(Lexer):
 
     EQ = r'=='
     NE = r'!='
-    LT = r'<'
     LE = r'<='
-    GT = r'>'
     GE = r'>='
-    ignore_comment = r'\#.*'
+    LT = r'<'
+    GT = r'>'
+    COMMENT = r'\#.*'
 
     @_(r'0x[0-9a-fA-F]+', r'\d+')
     def NUMBER(self, t):
@@ -37,5 +38,7 @@ def lex(line):
     tokens = []
     lexer = Lexer()
     for token in lexer.tokenize(line):
-        tokens += [str(token.value)]
+        token.value = str(token.value)
+        if not token.value.startswith('#'):
+            tokens += [token.value]
     return tokens

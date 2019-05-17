@@ -61,7 +61,7 @@ class Parser:
                 exit('error: invalid function (line %d)' % self.ln_no)
         except:
             exit('error: invalid function (line %d)' % self.ln_no)
-
+        
         cocode = cocode[1:-2]
         argi = 0
 
@@ -175,11 +175,19 @@ class Parser:
         # to determine the existence of var
         self.variables = []
 
-    def addr(self, name):
-        # function name + variable name
-        f = self.func
-        f = '' if f == None else f
-        f = f + '.' + name
+    def addr(self, name, glbl = False):
+        
+        # local variable
+        if not glbl:
+            
+            # function name + variable name
+            f = self.func
+            f = '' if f == None else f
+            f = f + '.' + name
+        
+        # global variable
+        else:
+            f = '.' + name
         
         # create if variable doesn't exist
         if f not in self.variables:
@@ -212,7 +220,10 @@ class Parser:
             self.lnerr = lnerr
             self.line = line
 
-            if line.strip() != '' and tokens[0] == 'else':
+            if (len(tokens) != 0 and
+                line.strip() != '' and
+                tokens[0] == 'else'):
+
                 try:
                     tc = self.to_close.pop()
                 except:
@@ -256,7 +267,7 @@ class Parser:
 
                     self.to_close.pop()
 
-            if line.strip() == '':
+            if line.strip() == '' or len(tokens) == 0:
                 continue
 
             self.asm.code += '\n'
@@ -270,6 +281,14 @@ class Parser:
 
                 self.asm(eval(tokens[1]))
             
+            # global
+            elif tokens[0] == 'global':
+                for v in tokens[1:]:
+                    a = self.addr(v, glbl = True)
+                    n = self.func + '.' + v
+                    self.mem[n] = a
+                    self.variables += [n]
+                    
             # function
             elif tokens[0] == 'def':
 
