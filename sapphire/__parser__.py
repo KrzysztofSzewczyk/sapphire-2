@@ -281,7 +281,6 @@ class Parser:
             kw = [
                 'def',
                 'if',
-                'else',
                 'while',
                 'global',
                 'as',
@@ -292,16 +291,24 @@ class Parser:
                 print((len(line) - 1) * ' ' + '^')
                 exit('error: invalid syntax')
 
+            if len(tokens) > 1 and tokens[0] == 'else':
+                print(line)
+                print((len(line) - 1) * ' ' + '^')
+                exit('error: invalid syntax')
+                
+                
             if (len(tokens) != 0 and
                 line.strip() != '' and
                 tokens[0] == 'else'):
 
-                try:
-                    tc = self.to_close.pop()
-                except:
-                    exit('error: `else` without `if` (%s)' % lnerr)
-
-                # print(tc)
+                for i, tc in enumerate(reversed(self.to_close)):
+                
+                    if tc[0] == 'if':
+                        break
+                
+                    if tc[1] == self.get_indent(line):
+                        for j in range(i + 1):
+                            self.close(self.to_close.pop())
 
                 self.asm.code += '\n'
                 self.asm('; else')
