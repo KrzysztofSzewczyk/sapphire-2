@@ -34,11 +34,14 @@ class Lexer(Lexer):
             t.value = int(t.value)
         return t
 
-def lex(line):
-    tokens = []
-    lexer = Lexer()
-    for token in lexer.tokenize(line):
-        token.value = str(token.value)
-        if not token.value.startswith('#'):
-            tokens += [token.value]
-    return tokens
+def lex(line, ln_no):
+    try:
+        tokens = []
+        lexer = Lexer()
+        for token in lexer.tokenize(line):
+            token.value = str(token.value)
+            if not token.value.startswith('#'):
+                tokens += [token.value]
+        return tokens
+    except Exception as e:
+        exit('error: %s (line %d)' % (e, ln_no))

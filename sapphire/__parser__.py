@@ -278,7 +278,7 @@ class Parser:
         for i, line in enumerate((code + '\n\n').splitlines()):
             
             self.ln_no = i + 1
-            tokens = lex(line)
+            tokens = lex(line, self.ln_no)
             lnerr = 'line %d' % self.ln_no
             self.lnerr = lnerr
             self.line = line
