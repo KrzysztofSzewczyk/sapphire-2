@@ -277,6 +277,20 @@ class Parser:
             lnerr = 'line %d' % self.ln_no
             self.lnerr = lnerr
             self.line = line
+            
+            kw = [
+                'def',
+                'if',
+                'else',
+                'while',
+                'global',
+                'as',
+            ]
+
+            if len(tokens) == 1 and tokens[0] in kw:
+                print(line)
+                print((len(line) - 1) * ' ' + '^')
+                exit('error: invalid syntax')
 
             if (len(tokens) != 0 and
                 line.strip() != '' and
