@@ -169,9 +169,9 @@ class Parser:
             # assign
             elif c1 == 83:
                 if var_address != None:
-                    self.asm('pop', 'r2')
-                    self.asm('mov', 'r1', var_address)
-                    self.asm('sto', 'r1', 'r2')
+                    self.asm('pop', 'r1')
+                    self.asm('mov', 'r2', var_address)
+                    self.asm('sto', 'r2', 'r1')
 
             elif c1 == 0x17 or c1 == 0x37: op('add')
             elif c1 == 0x18 or c1 == 0x38: op('sub')
