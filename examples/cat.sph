@@ -1,12 +1,13 @@
 
-# Example cat program.
-
 def putchar()
     as "out r1"
 
 def getchar()
     as "in_ r1"
 
-while(1)
-    x = getchar()
+x = getchar()
+
+while(x != 0)
     putchar(x)
+    x = getchar()
+    
