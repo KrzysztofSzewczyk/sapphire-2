@@ -154,7 +154,8 @@ class Parser:
                 elif isinstance(c, str):
                     for x in c:
                         self.asm('psh', ord(x))
-                    build_array(len(c))
+                    self.asm('psh', 0)
+                    build_array(len(c) + 1)
                 else:
                     exit('error: invalid const %s at `%s` (line %d)' % (
                         str(bytes(str(c).encode()))
