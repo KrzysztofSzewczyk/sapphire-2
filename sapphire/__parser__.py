@@ -151,6 +151,10 @@ class Parser:
                     self.asm('psh', 0)
                 elif isinstance(c, int):
                     self.asm('psh', c)
+                elif isinstance(c, tuple):
+                    for x in c:
+                        self.asm('psh', x)
+                    build_array(len(c))
                 elif isinstance(c, str):
                     for x in c:
                         self.asm('psh', ord(x))
