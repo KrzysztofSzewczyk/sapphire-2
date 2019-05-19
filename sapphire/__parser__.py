@@ -348,7 +348,12 @@ class Parser:
             
             # global
             elif tokens[0] == 'global':
-                for v in tokens[1:]:
+                
+                if self.func == None:
+                    exit('error: invalid use of global out of function (%s)'
+                            % lnerr)
+
+                for v in ''.join(tokens[1:]).split(','):
                     a = self.addr(v, glbl = True)
                     n = self.func + '.' + v
                     self.mem[n] = a

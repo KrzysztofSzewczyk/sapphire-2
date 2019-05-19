@@ -38,10 +38,27 @@ def lex(line, ln_no):
     try:
         tokens = []
         lexer = Lexer()
-        for token in lexer.tokenize(line):
+        lt = None
+
+        for i, token in enumerate(lexer.tokenize(line)):
             token.value = str(token.value)
+            
+            if i == 0:
+                if token.value == 'global':
+                    lt = 'global'
+
+            else:
+                if lt == 'global':
+                    if i % 2 == 1 and token.type != 'ID':
+                        exit('error: expected identifier at token' + 
+                                ' %d (line %d)' % (i + 1, ln_no))
+                    if i % 2 == 0 and token.value != ',':
+                        exit('error: expected `,` at token' + 
+                                ' %d (line %d)' % (i + 1, ln_no))
+
             if not token.value.startswith('#'):
                 tokens += [token.value]
         return tokens
     except Exception as e:
         exit('error: %s (line %d)' % (e, ln_no))
+
