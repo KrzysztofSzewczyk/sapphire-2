@@ -156,10 +156,24 @@ class Parser:
                         self.asm('psh', x)
                     build_array(len(c))
                 elif isinstance(c, str):
+                    self.asm('org', self.memi)
+                    self.asm.code += 'txt "'
+                    string = True
                     for x in c:
-                        self.asm('psh', ord(x))
-                    self.asm('psh', 0)
-                    build_array(len(c) + 1)
+                        x = ord(x)
+                        if x >= 32:
+                            if string == False:
+                                string = True
+                                self.asm.code += 'txt "'
+                            self.asm.code += chr(x)
+                        else:
+                            string = False
+                            self.asm.code += '"\ndb_ %d\n' % x
+                    if string:
+                        self.asm.code += '"\n'
+                    self.asm('db_', 0)
+                    self.asm('psh', self.memi)
+                    self.memi += c2 + 1
                 else:
                     exit('error: invalid const %s at `%s` (line %d)' % (
                         str(bytes(str(c).encode()))
