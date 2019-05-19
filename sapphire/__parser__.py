@@ -213,7 +213,7 @@ class Parser:
         # key: varname, value: address
         self.mem = {}
         # to determine address
-        self.memi = 32
+        self.memi = 0
         # to determine the existence of var
         self.variables = []
 
