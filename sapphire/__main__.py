@@ -7,9 +7,15 @@ from __parser__ import *
 from subprocess import run, PIPE
 from os.path import *
 
+from argparse import ArgumentParser
+
 def readfile(filename):
-    try: f = open(filename, 'r')
-    except Exception as e: exit('error: %s' % e)
+    f = None
+    if filename == '-':
+        f = stdin
+    else:
+        try: f = open(filename, 'r')
+        except Exception as e: exit('error: %s' % e)
 
     try: data = f.read()
     except Exception as e: exit('error: %s' % e)
@@ -19,11 +25,17 @@ def readfile(filename):
 
 if __name__ == '__main__':
 
-    if len(argv) < 3:
-        exit('usage: python sapphire <file.sph> <file.b>')
+    argparser = ArgumentParser(description='Py-like to Brainfuck compiler.')
+    argparser.add_argument('srcfile', metavar='file.sph', type=str, help=
+            'Source file')
+    argparser.add_argument('-o', metavar='output.b', type=str, help=
+            'Output file')
+    argparser.add_argument('-S', action='store_true', help='Output assembly')
+
+    args = argparser.parse_args()
 
     path = dirname(__file__) + '/'
-    code = readfile(argv[1])
+    code = readfile(args.srcfile)
 
     parser = Parser()
     parser.parse(code)
@@ -31,9 +43,24 @@ if __name__ == '__main__':
     asm = parser.asm.code
 
     # print(asm)
-    bf = run([path+'bfasm'], stdout=PIPE, input=asm, encoding='ascii')
 
-    f = open(argv[2], 'w')
-    f.write(bf.stdout)
-    f.close()
+    if args.o == None:
+        args.o = 'output.b'
+
+    output = asm
+
+    if args.S:
+        pass
+
+    else:
+        bf = run([path+'bfasm'], stdout=PIPE, input=asm, encoding='ascii')
+        output = bf.stdout
+
+    if args.o == '-':
+        print(output, end='')
+
+    else:
+        f = open(args.o, 'w')
+        f.write(bf.stdout)
+        f.close()
 
