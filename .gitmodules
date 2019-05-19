@@ -7,3 +7,9 @@
 [submodule "asmbf"]
 	path = asmbf
 	url = https://github.com/KrzysztofSzewczyk/asmbf
+[libsapphire2]
+	branch = master
+[asmbf]
+	branch = master
+[sapphire2-examples]
+	branch = master
