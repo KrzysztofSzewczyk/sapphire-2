@@ -24,7 +24,7 @@ class CodeGen:
 
 class Parser:
 
-    def __init__(self):
+    def __init__(self, path):
 
         # create codegen
         self.asm = CodeGen()
@@ -33,6 +33,9 @@ class Parser:
 
         # init memory
         self.meminit()
+
+        # set compiler path
+        self.path = path
 
     def compile(self, expr):
         try:
@@ -290,7 +293,7 @@ class Parser:
         self.to_close = []
 
         # count lines of code
-        self.line_count = code.count('\n')
+        line_count = code.count('\n')
 
         for i, line in enumerate((code + '\n\n').splitlines()):
             
@@ -343,7 +346,7 @@ class Parser:
                 self.to_close += [('else', self.get_indent(line), sklb)]
                 continue
 
-            if line.strip() != '' or self.line_count == i:
+            if line.strip() != '' or line_count == i:
                 for i, tc in enumerate(reversed(self.to_close)):
                 
                     if tc[1] == self.get_indent(line):
@@ -377,6 +380,23 @@ class Parser:
                     self.mem[n] = a
                     self.variables += [n]
                     
+            # import
+            elif tokens[0] == 'import':
+                fn = ''.join(tokens[1]).replace('.', '/') + '.sph'
+                try:
+                    f = open(fn, 'r')
+                except:
+                    try:
+                        f = open(self.path + '../libsapphire2/' + fn, 'r')
+                    except:
+                        exit('error: module `%s` not found (%s)' % (
+                            fn, lnerr))
+
+                module_code = f.read()
+                f.close()
+
+                self.parse(module_code)
+
             # function
             elif tokens[0] == 'def':
 
@@ -434,6 +454,4 @@ class Parser:
 
                 self.expr(' '.join(tokens))
                 self.asm('pop', 'r1')
-
-        self.asm('end')
 
