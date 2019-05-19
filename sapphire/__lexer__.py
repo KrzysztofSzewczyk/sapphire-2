@@ -26,13 +26,7 @@ class Lexer(Lexer):
     GT = r'>'
     COMMENT = r'\#.*'
 
-    @_(r'0x[0-9a-fA-F]+', r'\d+')
-    def NUMBER(self, t):
-        if t.value.startswith('0x'):
-            t.value = int(t.value[2:], 16)
-        else:
-            t.value = int(t.value)
-        return t
+    NUMBER = r'(0x[0-9a-fA-F]+)|(\d+)'
 
 def lex(line, ln_no):
     try:
