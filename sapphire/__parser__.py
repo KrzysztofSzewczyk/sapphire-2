@@ -161,7 +161,7 @@ class Parser:
                     string = True
                     for x in c:
                         x = ord(x)
-                        if x >= 32:
+                        if x >= 32 and chr(x) != '"':
                             if string == False:
                                 string = True
                                 self.asm.code += 'txt "'

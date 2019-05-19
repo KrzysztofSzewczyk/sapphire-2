@@ -8,7 +8,7 @@ class Lexer(Lexer):
     ignore = ' \t'
     literals = '+-*/=,()[]'
 
-    STRING = r'".*?"'
+    STRING = r'"(?:[^"\\]|\\.)*"'
     ID = r'[a-zA-Z_][a-zA-Z0-9_]*'
 
     # keywords
