@@ -1,0 +1,6 @@
+[submodule "libsapphire2"]
+	path = libsapphire2
+	url = https://github.com/SapphireProject/libsapphire2
+[submodule "sapphire2-examples"]
+	path = sapphire2-examples
+	url = https://github.com/SapphireProject/sapphire2-examples
