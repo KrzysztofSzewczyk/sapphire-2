@@ -417,3 +417,5 @@ class Parser:
                 self.expr(' '.join(tokens))
                 self.asm('pop', 'r1')
 
+        self.asm('end')
+
