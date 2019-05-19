@@ -6,7 +6,7 @@ class Lexer(Lexer):
                EQ, NE, LE, GE, LT, GT,
                COMMENT }
     ignore = ' \t'
-    literals = '+-*/%=,()[]'
+    literals = '+-*/=,()[]'
 
     STRING = r'".*?"'
     ID = r'[a-zA-Z_][a-zA-Z0-9_]*'
