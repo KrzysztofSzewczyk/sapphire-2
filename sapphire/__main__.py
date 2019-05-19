@@ -37,7 +37,7 @@ if __name__ == '__main__':
     path = dirname(__file__) + '/'
     code = readfile(args.srcfile)
 
-    parser = Parser()
+    parser = Parser(path)
     parser.parse(code)
 
     asm = parser.asm.code
