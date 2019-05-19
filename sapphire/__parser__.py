@@ -261,7 +261,7 @@ class Parser:
         return rline.replace(line.strip(), '')
 
     def close(self, tc):
-        # print(tc)
+        # print(self.lnerr, tc)
                     
         self.asm.code += '\n'
         self.asm('; end')
@@ -288,6 +288,9 @@ class Parser:
 
         # (stmt, indent, ...)
         self.to_close = []
+
+        # count lines of code
+        self.line_count = code.count('\n')
 
         for i, line in enumerate((code + '\n\n').splitlines()):
             
@@ -340,11 +343,12 @@ class Parser:
                 self.to_close += [('else', self.get_indent(line), sklb)]
                 continue
 
-            for i, tc in enumerate(reversed(self.to_close)):
+            if line.strip() != '' or self.line_count == i:
+                for i, tc in enumerate(reversed(self.to_close)):
                 
-                if tc[1] == self.get_indent(line):
-                    for j in range(i + 1):
-                        self.close(self.to_close.pop())
+                    if tc[1] == self.get_indent(line):
+                        for j in range(i + 1):
+                            self.close(self.to_close.pop())
 
             if line.strip() == '' or len(tokens) == 0:
                 continue
