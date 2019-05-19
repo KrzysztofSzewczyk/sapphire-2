@@ -91,6 +91,17 @@ class Parser:
             self.asm('pop', 'r1')
             self.asm(instr, 'r1', 'r2')
             self.asm('psh', 'r1')
+
+        def mod():
+            self.asm('pop', 'r2') # 2
+            self.asm('pop', 'r1') # 43
+            
+            self.asm('mov', 'r3', 'r1')
+            self.asm('div', 'r3', 'r2')
+            self.asm('mul', 'r3', 'r2')
+            self.asm('sub', 'r1', 'r3')
+
+            self.asm('psh', 'r1') # 2
         
         def build_array(c2):
             self.memi += c2
@@ -108,7 +119,7 @@ class Parser:
         
         for i, c in enumerate(cocode):
             c1, c2 = c
-            
+
             # subscr
             if c1 == 25:
                 name = co.co_names[cocode[i - 2][1]]
@@ -194,10 +205,11 @@ class Parser:
                     self.asm('mov', 'r2', var_address)
                     self.asm('sto', 'r2', 'r1')
 
-            elif c1 == 0x17 or c1 == 0x37: op('add')
-            elif c1 == 0x18 or c1 == 0x38: op('sub')
             elif c1 == 0x14 or c1 == 0x39: op('mul')
             elif c1 == 0x15 or c1 == 0x1b or c1 == 0x3a: op('div')
+            elif c1 == 0x16: mod()
+            elif c1 == 0x17 or c1 == 0x37: op('add')
+            elif c1 == 0x18 or c1 == 0x38: op('sub')
 
             # compare op
             elif c1 == 107:
