@@ -1,15 +1,12 @@
-[submodule "libsapphire2"]
-	path = libsapphire2
-	url = https://github.com/SapphireProject/libsapphire2
-[submodule "sapphire2-examples"]
-	path = sapphire2-examples
-	url = https://github.com/SapphireProject/sapphire2-examples
 [submodule "asmbf"]
 	path = asmbf
 	url = https://github.com/KrzysztofSzewczyk/asmbf
-[libsapphire2]
 	branch = master
-[asmbf]
+[submodule "libsapphire2"]
+	path = libsapphire2
+	url = https://github.com/SapphireProject/libsapphire2
 	branch = master
-[sapphire2-examples]
+[submodule "sapphire2-examples"]
+	path = sapphire2-examples
+	url = https://github.com/SapphireProject/sapphire2-examples
 	branch = master
