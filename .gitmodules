@@ -4,3 +4,6 @@
 [submodule "sapphire2-examples"]
 	path = sapphire2-examples
 	url = https://github.com/SapphireProject/sapphire2-examples
+[submodule "asmbf"]
+	path = asmbf
+	url = https://github.com/KrzysztofSzewczyk/asmbf
