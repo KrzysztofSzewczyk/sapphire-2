@@ -37,6 +37,9 @@ class Parser:
         # set compiler path
         self.path = path
 
+        # try scope
+        self._try = 0
+
     def compile(self, expr):
         try:
            co = compile(expr, self.lnerr, 'eval')
@@ -334,6 +337,7 @@ class Parser:
 
         if tc[0] == 'else': self.asm('lbl', tc[2])
         if tc[0] == 'if': self.asm('lbl', tc[2])
+        if tc[0] == 'try': self._try -= 1
 
         if tc[0] == 'while':
             self.asm('jmp', tc[3])
@@ -439,19 +443,33 @@ class Parser:
                     n = self.func + '.' + v
                     self.mem[n] = a
                     self.variables += [n]
-                    
+
+            # try
+            elif tokens[0] == 'try':
+                self._try += 1
+                self.to_close += [('try', self.get_indent(line))]
+
+            # except
+            elif tokens[0] == 'except':
+                self.expr('__exception__', var_assign=[tokens[1]])
+                self.expr('0', var_assign=['__exception__'])
+
             # raise
             elif tokens[0] == 'raise':
 
-                names = self.names('EXCEPTION')
+                names = self.names('__exception__')
                 expr = ('  File <%s>' % str(bytes(filename.encode()))[2:-1]
                        +' line %d\n\nException: ' % self.ln_no
                        +'%s' % str(bytes(tokens[1].encode()))[2:-1])
-                
                 expr = str(bytes(expr.encode()))[1:]
+                if self._try != 0:
+                    expr = tokens[1]
 
                 self.expr(expr, var_assign=names)
-                self.expr('puts(EXCEPTION)')
+                
+                if self._try == 0:
+                    self.expr('puts(__exception__)')
+                    self.asm('end')
                     
             # import
             elif tokens[0] == 'import':
