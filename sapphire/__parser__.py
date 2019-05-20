@@ -390,6 +390,7 @@ class Parser:
                 for i, tc in enumerate(reversed(self.to_close)):
                 
                     if tc[0] == 'if':
+                        self.close(self.to_close.pop())
                         break
                 
                     if tc[1] == self.get_indent(line):
