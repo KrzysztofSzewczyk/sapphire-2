@@ -37,6 +37,9 @@ class Parser:
         # set compiler path
         self.path = path
 
+        # try scope
+        self._try = 0
+
     def compile(self, expr):
         try:
            co = compile(expr, self.lnerr, 'eval')
@@ -229,8 +232,10 @@ class Parser:
                                 self.asm.code += 'txt "'
                             self.asm.code += chr(x)
                         else:
+                            if string == True:
+                                self.asm.code += '"'
                             string = False
-                            self.asm.code += '"\ndb_ %d\n' % x
+                            self.asm.code += '\ndb_ %d\n' % x
                     if string:
                         self.asm.code += '"\n'
                     self.asm('db_', 0)
@@ -332,6 +337,7 @@ class Parser:
 
         if tc[0] == 'else': self.asm('lbl', tc[2])
         if tc[0] == 'if': self.asm('lbl', tc[2])
+        if tc[0] == 'try': self._try -= 1
 
         if tc[0] == 'while':
             self.asm('jmp', tc[3])
@@ -345,7 +351,7 @@ class Parser:
             self.asm('mov', 'r1', tc[3])
             self.asm('sto', 'r1', tc[4])
 
-    def parse(self, code):
+    def parse(self, code, filename):
         
         # global
         self.func = None
@@ -423,10 +429,6 @@ class Parser:
 
             # inline asm
             if tokens[0] == 'as':
-                
-                if tokens[1][0] != '"' or tokens[1][-1] != '"':
-                    exit('error: expected string after `as` (%s)' % lnerr)
-
                 self.asm(eval(tokens[1]))
             
             # global
@@ -441,6 +443,33 @@ class Parser:
                     n = self.func + '.' + v
                     self.mem[n] = a
                     self.variables += [n]
+
+            # try
+            elif tokens[0] == 'try':
+                self._try += 1
+                self.to_close += [('try', self.get_indent(line))]
+
+            # except
+            elif tokens[0] == 'except':
+                self.expr('__exception__', var_assign=[tokens[1]])
+                self.expr('0', var_assign=['__exception__'])
+
+            # raise
+            elif tokens[0] == 'raise':
+
+                names = self.names('__exception__')
+                expr = ('  File <%s>' % str(bytes(filename.encode()))[2:-1]
+                       +' line %d\n\nException: ' % self.ln_no
+                       +'%s' % str(bytes(tokens[1].encode()))[2:-1])
+                expr = str(bytes(expr.encode()))[1:]
+                if self._try != 0:
+                    expr = tokens[1]
+
+                self.expr(expr, var_assign=names)
+                
+                if self._try == 0:
+                    self.expr('puts(__exception__)')
+                    self.asm('end')
                     
             # import
             elif tokens[0] == 'import':
@@ -457,7 +486,7 @@ class Parser:
                 module_code = f.read()
                 f.close()
 
-                self.parse(module_code)
+                self.parse(module_code, fn)
 
             # function
             elif tokens[0] == 'def':
@@ -505,7 +534,7 @@ class Parser:
 
             # var assign
             elif len(tokens) > 1 and '=' in tokens:
-                 
+
                 names = self.names(' '.join(tokens[:tokens.index('=')]))
                 expr = ' '.join(tokens[tokens.index('=') + 1:])
                 self.expr(expr, var_assign=names)

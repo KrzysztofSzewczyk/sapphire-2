@@ -38,7 +38,7 @@ if __name__ == '__main__':
     code = readfile(args.srcfile)
 
     parser = Parser(path)
-    parser.parse(code)
+    parser.parse(code, args.srcfile)
 
     asm = parser.asm.code
 

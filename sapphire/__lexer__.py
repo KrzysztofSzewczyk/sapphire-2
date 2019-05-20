@@ -4,7 +4,8 @@ class Lexer(Lexer):
     tokens = { ID, STRING, NUMBER, AS,
                IF, DEF, ELSE, WHILE,
                EQ, NE, LE, GE, LT, GT,
-               COMMENT, GLOBAL, IMPORT }
+               COMMENT, GLOBAL, IMPORT,
+               RAISE, TRY, EXCEPT }
     ignore = ' \t'
     literals = '+-*/%=,()[]'
 
@@ -15,10 +16,13 @@ class Lexer(Lexer):
     ID['if'] = IF
     ID['as'] = AS
     ID['def'] = DEF
+    ID['try'] = TRY
     ID['else'] = ELSE
     ID['while'] = WHILE
     ID['global'] = GLOBAL
     ID['import'] = IMPORT
+    ID['raise'] = RAISE
+    ID['except'] = EXCEPT
 
     EQ = r'=='
     NE = r'!='
@@ -42,6 +46,8 @@ def lex(line, ln_no):
             if i == 0:
                 if token.value == 'global': lt = 'global'
                 if token.value == 'import': lt = 'import'
+                if token.value == 'raise': lt = 'raise'
+                if token.value == 'except': lt = 'except'
 
             else:
                 if lt == 'global':
@@ -59,6 +65,16 @@ def lex(line, ln_no):
                     if i % 2 == 0 and token.value != '.':
                         exit('error: expected `.` at token' + 
                                 ' %d (line %d)' % (i + 1, ln_no))
+                
+                elif lt == 'raise':
+                    if i != 1 and token.type != 'STRING':
+                        exit('error: expected `raise "..."`' + 
+                                ' (line %d)' % ln_no)
+                
+                elif lt == 'except':
+                    if i != 1 and token.type != 'ID':
+                        exit('error: expected `except ...`' + 
+                                ' (line %d)' % ln_no)
 
             if not token.value.startswith('#'):
                 tokens += [token.value]
