@@ -4,7 +4,8 @@ class Lexer(Lexer):
     tokens = { ID, STRING, NUMBER, AS,
                IF, DEF, ELSE, WHILE,
                EQ, NE, LE, GE, LT, GT,
-               COMMENT, GLOBAL, IMPORT }
+               COMMENT, GLOBAL, IMPORT,
+               RAISE }
     ignore = ' \t'
     literals = '+-*/%=,()[]'
 
@@ -19,6 +20,7 @@ class Lexer(Lexer):
     ID['while'] = WHILE
     ID['global'] = GLOBAL
     ID['import'] = IMPORT
+    ID['raise'] = RAISE
 
     EQ = r'=='
     NE = r'!='

@@ -229,8 +229,10 @@ class Parser:
                                 self.asm.code += 'txt "'
                             self.asm.code += chr(x)
                         else:
+                            if string == True:
+                                self.asm.code += '"'
                             string = False
-                            self.asm.code += '"\ndb_ %d\n' % x
+                            self.asm.code += '\ndb_ %d\n' % x
                     if string:
                         self.asm.code += '"\n'
                     self.asm('db_', 0)
@@ -345,7 +347,7 @@ class Parser:
             self.asm('mov', 'r1', tc[3])
             self.asm('sto', 'r1', tc[4])
 
-    def parse(self, code):
+    def parse(self, code, filename):
         
         # global
         self.func = None
@@ -423,10 +425,6 @@ class Parser:
 
             # inline asm
             if tokens[0] == 'as':
-                
-                if tokens[1][0] != '"' or tokens[1][-1] != '"':
-                    exit('error: expected string after `as` (%s)' % lnerr)
-
                 self.asm(eval(tokens[1]))
             
             # global
@@ -441,6 +439,19 @@ class Parser:
                     n = self.func + '.' + v
                     self.mem[n] = a
                     self.variables += [n]
+                    
+            # raise
+            elif tokens[0] == 'raise':
+
+                names = self.names('EXCEPTION')
+                expr = ('  File <%s>' % str(bytes(filename.encode()))[2:-1]
+                       +' line %d\n\nException: ' % self.ln_no
+                       +'%s' % str(bytes(tokens[1].encode()))[2:-1])
+                
+                expr = str(bytes(expr.encode()))[1:]
+
+                self.expr(expr, var_assign=names)
+                self.expr('puts(EXCEPTION)')
                     
             # import
             elif tokens[0] == 'import':
@@ -457,7 +468,7 @@ class Parser:
                 module_code = f.read()
                 f.close()
 
-                self.parse(module_code)
+                self.parse(module_code, fn)
 
             # function
             elif tokens[0] == 'def':
@@ -505,7 +516,7 @@ class Parser:
 
             # var assign
             elif len(tokens) > 1 and '=' in tokens:
-                 
+
                 names = self.names(' '.join(tokens[:tokens.index('=')]))
                 expr = ' '.join(tokens[tokens.index('=') + 1:])
                 self.expr(expr, var_assign=names)
