@@ -61,6 +61,6 @@ if __name__ == '__main__':
 
     else:
         f = open(args.o, 'w')
-        f.write(bf.stdout)
+        f.write(output)
         f.close()
 
