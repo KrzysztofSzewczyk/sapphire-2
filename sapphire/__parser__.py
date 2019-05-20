@@ -53,6 +53,48 @@ class Parser:
     def get_cocode(self, co):
         return list(zip(*[iter(list(co.co_code))] * 2))
 
+    def assign(self, expr):
+        expr = expr.strip()
+        co = self.compile(expr)
+        cocode = self.get_cocode(co)
+        consts = []
+
+        def assign_error(s = ''):
+            print(self.line)
+            print('^')
+            s = s + ' ' if s != '' else ''
+            exit('error: invalid assign %s(line %d)' % (s, self.ln_no))
+
+        for i, c in enumerate(cocode):
+            c1, c2 = c
+
+            if c1 == 101:
+                self.asm('psh', self.addr(co.co_names[c2]))
+
+            elif c1 == 83:
+                pass
+
+            elif c1 == 25:
+                self.asm('pop', 'r1')
+                self.asm('rcl', 'r2', 'r1')
+                self.asm('add', 'r2', consts.pop())
+                self.asm('psh', 'r2')
+
+            elif c1 == 100:
+                consts += [co.co_consts[c2]]
+            
+            else:
+                assign_error()
+
+        if consts != []:
+            t = str(type(consts.pop()))[8:-2]
+            assign_error('to %s' % t)
+
+        self.asm('pop', 'r2')
+    
+    def names(self, names):
+        return names.split(',')
+
     def function(self, expr):
         co = self.compile(expr)
         cocode = self.get_cocode(co)
@@ -82,7 +124,7 @@ class Parser:
             self.asm('mov', 'r4', addr)
             self.asm('sto', 'r4', 'r' + str(argi))
 
-    def expr(self, expr, var_address=None):
+    def expr(self, expr, var_assign=None):
         co = self.compile(expr)
         cocode = self.get_cocode(co)
 
@@ -154,6 +196,11 @@ class Parser:
             elif c1 == 103:
                 build_array(c2)
 
+            # build tuple
+            elif c1 == 102:
+                if var_assign != None and len(var_assign) == 1:
+                    build_array(len(c))
+
             # load const
             elif c1 == 100:
                 c = co.co_consts[c2]
@@ -168,7 +215,8 @@ class Parser:
                 elif isinstance(c, tuple):
                     for x in c:
                         self.asm('psh', x)
-                    build_array(len(c))
+                    if var_assign != None and len(var_assign) == 1:
+                        build_array(len(c))
                 elif isinstance(c, str):
                     self.asm('org', self.memi)
                     self.asm.code += 'txt "'
@@ -187,7 +235,7 @@ class Parser:
                         self.asm.code += '"\n'
                     self.asm('db_', 0)
                     self.asm('psh', self.memi)
-                    self.memi += c2 + 1
+                    self.memi += len(c) + 1
                 else:
                     exit('error: invalid const %s at `%s` (line %d)' % (
                         str(bytes(str(c).encode()))
@@ -200,11 +248,12 @@ class Parser:
             
             # assign
             elif c1 == 83:
-                if var_address != None:
-                    self.asm('pop', 'r1')
-                    self.asm('mov', 'r2', var_address)
-                    self.asm('sto', 'r2', 'r1')
-
+                if var_assign != None:
+                    for i in reversed(var_assign):
+                            self.assign(i)
+                            self.asm('pop', 'r1')
+                            self.asm('sto', 'r2', 'r1')
+            
             elif c1 == 0x14 or c1 == 0x39: op('mul')
             elif c1 == 0x15 or c1 == 0x1b or c1 == 0x3a: op('div')
             elif c1 == 0x16: mod()
@@ -295,7 +344,7 @@ class Parser:
             self.asm('lbl', tc[2])
             self.asm('mov', 'r1', tc[3])
             self.asm('sto', 'r1', tc[4])
-       
+
     def parse(self, code):
         
         # global
@@ -454,12 +503,11 @@ class Parser:
                     sklb, back)]
 
             # var assign
-            elif len(tokens) > 1 and tokens[1] == '=':
-                
-                name = tokens[0]
-                addr = self.addr(name)
-                expr = ' '.join(tokens[2:])
-                self.expr(expr, var_address=addr)
+            elif len(tokens) > 1 and '=' in tokens:
+                 
+                names = self.names(' '.join(tokens[:tokens.index('=')]))
+                expr = ' '.join(tokens[tokens.index('=') + 1:])
+                self.expr(expr, var_assign=names)
 
             # expr
             else:
