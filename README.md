@@ -12,7 +12,7 @@ Sapphire 2 is a Python-like programming language that compiles to the brainfuck.
   - Arrays
   - Tuples
   - If, else, while
-  - Exceptions
+  - Exceptions (bugged)
 
 ## Requirements
 
