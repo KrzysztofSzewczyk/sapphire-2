@@ -19,6 +19,7 @@ Sapphire 2 is a Python-like programming language that compiles to the brainfuck.
   - Python 3.6.x
   - sly
   - C compiler (recommended gcc or clang)
+  - asm2bf (bundled with sapphire)
 
 ## Installation
 
