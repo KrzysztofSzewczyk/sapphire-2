@@ -336,6 +336,7 @@ class Parser:
         self.asm('; end')
 
         if tc[0] == 'else': self.asm('lbl', tc[2])
+        if tc[0] == 'except': self.asm('lbl', tc[2])
         if tc[0] == 'if': self.asm('lbl', tc[2])
         if tc[0] == 'try': self._try -= 1
 
@@ -391,11 +392,15 @@ class Parser:
                 
             if (len(tokens) != 0 and
                 line.strip() != '' and
-                tokens[0] == 'else'):
+                tokens[0] in ['else', 'except']):
 
                 for i, tc in enumerate(reversed(self.to_close)):
                 
-                    if tc[0] == 'if':
+                    if tc[0] == 'if' and tokens[0] == 'else':
+                        self.close(self.to_close.pop())
+                        break
+                
+                    if tc[0] == 'try' and tokens[0] == 'except':
                         self.close(self.to_close.pop())
                         break
                 
@@ -404,14 +409,18 @@ class Parser:
                             self.close(self.to_close.pop())
 
                 self.asm.code += '\n'
-                self.asm('; else')
+                self.asm('; %s' % tokens[0])
                 
                 sklb = self.asm.label(i = True)
                 
-                self.asm('jmp', sklb)
-                self.asm('lbl', tc[2])
+                self.asm('rcl', 'r1', self.addr('__exception__'))
+                self.asm('jz_', 'r1', sklb)
 
-                self.to_close += [('else', self.get_indent(line), sklb)]
+                if tokens[0] == 'except':
+                    self.expr('__exception__', var_assign=[tokens[1]])
+                    self.expr('0', var_assign=['__exception__'])
+
+                self.to_close += [(tokens[0], self.get_indent(line), sklb)]
                 continue
 
             if line.strip() != '' or line_count == i:
@@ -447,12 +456,8 @@ class Parser:
             # try
             elif tokens[0] == 'try':
                 self._try += 1
-                self.to_close += [('try', self.get_indent(line))]
-
-            # except
-            elif tokens[0] == 'except':
-                self.expr('__exception__', var_assign=[tokens[1]])
-                self.expr('0', var_assign=['__exception__'])
+                sklb = self.asm.label(i = True)
+                self.to_close += [('try', self.get_indent(line), sklb)]
 
             # raise
             elif tokens[0] == 'raise':

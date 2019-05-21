@@ -25,12 +25,13 @@ def readfile(filename):
 
 if __name__ == '__main__':
 
-    argparser = ArgumentParser(description='Py-like to Brainfuck compiler.')
+    argparser = ArgumentParser(description='py-like to brainfuck compiler.')
     argparser.add_argument('srcfile', metavar='file.sph', type=str, help=
-            'Source file')
+            'source file')
     argparser.add_argument('-o', metavar='output.b', type=str, help=
-            'Output file')
-    argparser.add_argument('-S', action='store_true', help='Output assembly')
+            'output file')
+    argparser.add_argument('-S', action='store_true', help=
+            'output assembly')
 
     args = argparser.parse_args()
 
